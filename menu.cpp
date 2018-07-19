@@ -1,4 +1,4 @@
-﻿#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #define WHITE 15
 #define GREEN 2
 #define RED 4
@@ -20,7 +20,7 @@
 #pragma pack(1)
 #pragma pack(pop)
 enum status { UP, DOWN, LEFT, RIGHT, ENTER, ESC, TAB };
-
+int lives = 2;
 using namespace std;
 void gotoxy(int x, int y)
 {
@@ -37,16 +37,14 @@ void setTextAttribute(int k)
 	SetConsoleTextAttribute(hConsole, k);
 }
 
-void setWindowSize()
+void setWindowSize(int width, int height)
 {
 	HWND console = GetConsoleWindow();
 	RECT r;
 	GetWindowRect(console, &r); //stores the console's current dimensions
 
 								//MoveWindow(window_handle, x, y, width, height, redraw_window);
-	MoveWindow(console, r.left, r.top, 800, 600, TRUE);
-	Sleep(100);
-	MoveWindow(console, r.left, r.top, r.right - r.left, r.bottom - r.top, TRUE);
+	MoveWindow(console, r.left, r.top, width, height, TRUE);
 }
 
 void drawborder(int x, int y, int width, int height, int color, string textinbutton)
@@ -102,9 +100,62 @@ status key(char a)
 		return ESC;
 }
 
+void drawgame(int x, int y, int width, int height, int color, string textinbutton)
+{
+	setTextAttribute(color);
+	gotoxy(x - width, y - width);
+	cout << char(201);	//  ┌
+
+	for (int i = 0; i < height; i++)
+		cout << char(205);	//  ─
+	cout << char(187);	//  ┐
+
+	for (int i = 1 - width; i <= width - 1; i++)
+	{
+		gotoxy(x - width, y + i);
+		cout << char(186);	//  │ 
+	}
+
+	gotoxy(x - width, y + width);
+	cout << char(200);
+
+	for (int i = 0; i < height; i++)
+		cout << char(205);	//  ─
+	cout << char(188);	//  ┘
+
+	for (int i = 1 - width; i <= width - 1; i++)
+	{
+		gotoxy(x + height + 1 - width, y + i);
+		cout << char(186);	//  │ 
+	}
+	gotoxy(0, 3);
+	cout << char(204);
+	for (int i = 0; i < height; i++)
+		cout << char(205);	//  ─
+	gotoxy(height + 1, 3);
+	cout << char(185);
+	gotoxy(1, 1);
+	cout << "LIVES: ";
+	for (int i = 0; i < lives; i++)
+	{
+		cout << "A ";
+	}
+	int center = (height - textinbutton.length()) / 2;
+	//gotoxy(x + center, y);
+	gotoxy(center - 2, 1);
+	cout << "CROSS THE ROAD";
+}
+
+void testscreen() {
+	system("cls");
+	setWindowSize(850, 600);
+	drawgame(17, 17, 17, 100, LIGHTGREEN, " ");
+}
+
 void main()
 {
-	setWindowSize();
+	setWindowSize(900, 500);
+
 	setTextAttribute(LIGHTMAGNETA);
 	cout << "\n\n\n\n\n";
 	cout << " ::::::  :::::::   ::::::   ::::::   ::::::  :::::::  ::::  :::  :::::: " << endl;
@@ -122,12 +173,8 @@ void main()
 	cout << "\t\t+#+  +#+ +#+  +#+ +#+   +#+ +#+  +#+" << endl;
 	cout << "\t\t#+#  #+# #+#  #+# #+#   #+# #+#  #+#" << endl;
 	cout << "\t\t###  ###  ######  ###   ### ####### " << endl;
-	//int loca = 10;
 
-	//drawBorder(60, 11, 2, 25, LIGHTGREEN, "New Game");
-	//drawBorder(60, 16, 2, 25, LIGHTGREEN, "Load Game");
-	//drawBorder(60, 21, 2, 25, LIGHTGREEN, "Setting");
-	string tit[] = { "New Game", "Load Game", "Setting", "Exit game" };
+	string tit[] = { "New game", "Load game", "Setting", "Exit game" };
 	int n = sizeof(tit) / sizeof(tit[0]);
 	drawborder(85, 5, 2, 22, LIGHTGREEN, tit[0]);
 	int loca = 10;
@@ -175,21 +222,28 @@ void main()
 			{
 			case 10:
 			{
+				testscreen();
+				return;
 			}
 			case 15:
 			{
-
+				testscreen();
+				return;
 			}
 			case 20:
 			{
-
+				testscreen();
+				return;
 			}
 			case 25:
 			{
+				testscreen();
+				return;
 			}
 			}
+			c = _getch();
 		}
-		c = _getch();
+		_getch();
 	}
-	_getch();
 }
+
