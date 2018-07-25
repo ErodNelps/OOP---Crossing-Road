@@ -3,7 +3,6 @@ void LoadingScreeen() {
 	int count = x;
 	int y = 12;
 	int width = 40;
-	int p;
 	gotoxy(x, y - 2);
 	setTextAttribute(LIGHTGREEN);
 	for (int i = 1; i <= 40; i++)
