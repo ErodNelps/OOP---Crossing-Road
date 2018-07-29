@@ -37,27 +37,27 @@ void Game::Allocate()
 	speed = 20 - acceleration > 5 ? 20 - acceleration : 5;
 	for (int i = 0; i < quantity; i++)
 	{
-		this->machine.push_back(new Car(1 + i * ((width - 6 * quantity) / quantity + 6), 19, (width - 6 * quantity) / quantity + 1, speed));
+		this->machine.push_back(new Car(1 + i * ((width - 6 * quantity) / quantity + 6), 27, speed, false));
+		this->machine.push_back(new Car(1 + i * ((width - 6 * quantity) / quantity + 6), 19, speed, false));
 	}
 
 	speed = 25 - acceleration > 5 ? 25 - acceleration : 5;
 	for (int i = 0; i < quantity; i++)
 	{
-		this->machine.push_back(new Truck(1 + i * ((width - 6 * quantity) / quantity + 6), 15, (width - 6 * quantity) / quantity + 1, speed));
-		this->machine.push_back(new Truck(1 + i * ((width - 6 * quantity) / quantity + 6), 23, (width - 6 * quantity) / quantity + 1, speed));
+		this->machine.push_back(new Truck((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 23, speed, true));
 	}
 
 	speed = 40 - acceleration > 5 ? 40 - acceleration : 5;
 	for (int i = 0; i < quantity; i++)
 	{
-		this->animal.push_back(new Snake(1 + i * ((width - 6 * quantity) / quantity + 6), 11, (width - 6 * quantity) / quantity + 1, speed));
-		this->animal.push_back(new Snake(1 + i * ((width - 6 * quantity) / quantity + 6), 27, (width - 6 * quantity) / quantity + 1, speed));
+		this->animal.push_back(new Snake((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 7, speed, true));
+		this->animal.push_back(new Snake((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 15, speed, true));
 	}
 
 	speed = 30 - acceleration > 5 ? 30 - acceleration : 5;
 	for (int i = 0; i < quantity; i++)
 	{
-		this->animal.push_back(new Bird(1 + i * ((width - 6 * quantity) / quantity + 6), 7, (width - 6 * quantity) / quantity + 1, speed));
+		this->animal.push_back(new Bird(1 + i * ((width - 6 * quantity) / quantity + 6), 11, speed, false));
 	}
 }
 void Game::ResetLevel(bool status)
@@ -149,7 +149,7 @@ void Game::Reset(bool status)
 		cout << char(186);
 	}
 	string destination = "DESTINATION";
-	Go((this->width - destination.length()) / 2 + 2, 5);
+	Go(int((this->width - destination.length()) / 2 + 2), 5);
 	cout << destination;
 
 	if (this->life == 0)
@@ -157,11 +157,11 @@ void Game::Reset(bool status)
 		this->DeleteObjects();
 
 		text = "PRESS [ENTER] TO START A NEW GAME";
-		Go((this->width - text.length()) / 2 + 2, this->height / 2);
+		Go(int((this->width - text.length()) / 2 + 2), this->height / 2);
 		cout << text;
 
 		text = "PRESS [ESC] TO GET BACK TO MENU";
-		Go((this->width - text.length()) / 2 + 2, this->height / 2 + 1);
+		Go(int((this->width - text.length()) / 2 + 2), this->height / 2 + 1);
 		cout << text;
 	}
 }
@@ -183,6 +183,9 @@ void Game::Operation()
 		if (this->key < 7)
 			this->UpdatePlayer(this->key);
 		this->key = 7;
+		this->SetTimer();
+		if (this->timer.Status())
+			this->UpdateTimer();
 		this->UpdateNPLCs();
 		this->UpdateNPMCs();
 		if (this->player.Win())
@@ -396,6 +399,8 @@ bool Game::Status()
 void Game::DeleteObjects()
 {
 	this->player.Disappear();
+	this->timer.Disappear();
+	this->timer.SetUp(false, 0);
 
 	for (unsigned i = 0; i < this->machine.size(); i++)
 	{
@@ -419,6 +424,77 @@ void Game::CreateObjects()
 	for (unsigned i = 0; i < this->animal.size(); i++)
 	{ 
 		this->animal[i]->Appear();
+	}
+}
+void Game::SetTimer()
+{
+	if (this->timer.Status())
+		return;
+	int target;
+	srand(unsigned(time(0)));
+
+	if ((rand() % 1000) > this->timer.Chance())
+		return;
+
+	switch (int(rand() % 5))
+	{
+	case 0:
+	{
+		target = 27;
+		break;
+	}
+	case 1:
+	{
+		target = 23;
+		break;
+	}
+	case 2:
+	{
+		target = 19;
+		break;
+	}
+	case 3:
+	{
+		target = 15;
+		break;
+	}
+	case 4:
+	{
+		target = 11;
+		break;
+	}
+	case 5:
+	{
+		target = 7;
+		break;
+	}
+	}
+
+	for (unsigned i = 0; i < this->machine.size(); i++)
+	{
+		if (this->machine[i]->y == target)
+			this->machine[i]->SetSpeed(100);
+	}
+
+	for (unsigned i = 0; i < this->animal.size(); i++)
+	{
+		if (this->animal[i]->y == target)
+			this->animal[i]->SetSpeed(100);
+	}
+
+	this->timer.SetUp(true, 100);
+	this->timer.Targer(target + 2);
+	this->timer.Appear();
+}
+
+void Game::UpdateTimer()
+{
+	if (this->timer.Status() && this->timer.CountDown())
+	{
+		if (!this->timer.Update())
+			return;
+		this->timer.Disappear();
+		this->timer.Appear();
 	}
 }
 
@@ -504,7 +580,7 @@ void Game::DrawGame(int color, string text)
 	{
 		cout << "A ";
 	}
-	int center = (this->width - text.length()) / 2;
+	int center = int((this->width - text.length()) / 2);
 	Go(center + 2, 1);
 	cout << text;
 	Go(0, 6);
@@ -522,7 +598,7 @@ void Game::DrawGame(int color, string text)
 		cout << char(186);
 	}
 	string destination = "DESTINATION";
-	Go((this->width - destination.length()) / 2 + 2, 5);
+	Go(int((this->width - destination.length()) / 2 + 2), 5);
 	cout << destination;
 
 	Go(90, 1);
@@ -533,9 +609,10 @@ void Game::DrawGame(int color, string text)
 
 void Game::Menu()
 {
+	SetWindowSize(900, 500);
+	this->LoadingScreeen();
 	system("cls");
 	bool menu = TRUE;
-	SetWindowSize(900, 500);
 
 	SetTextAttribute(LIGHTMAGNETA);
 	cout << "\n\n\n\n\n";
@@ -630,4 +707,40 @@ void Game::Menu()
 		else if (state == ESC)
 			exit(0);
 	}
+}
+void Game::LoadingScreeen()
+{
+	system("cls");
+
+	int x = 35;
+	int count = x;
+	int y = 12;
+	int width = 50;
+	Go(x, y - 2);
+	SetTextAttribute(LIGHTGREEN);
+	for (int i = 1; i <= 50; i++)
+	{
+		DrawBorder(x, y, 1, width, LIGHTGREEN, " ");
+		Go(x, y - 2);
+		cout << "Loading...";
+		Go(x, y);
+		for (int j = 1; j <= i; j++)
+		{
+			cout << char(219);
+		}
+		Go(x + 11, y - 2);
+		cout << 2 * i << "%";
+		Go(x, y + 2);
+		cout << "                                        ";
+		Go(x, y + 2);
+		if (i > 1 && i < 20)
+			cout << "\tCreating Temporary files";
+		else if (i > 20 && i < 30)
+			cout << "\tAccessing Main Memory";
+		else if (i > 40 && i < 48)
+			cout << "\tHacking System";
+		else cout << "\tCompleted";
+		Sleep(70);
+	}
+	Sleep(700);
 }

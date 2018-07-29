@@ -54,7 +54,7 @@ void DrawBorder(int x, int y, int width, int height, int color, string textinbut
 		cout << char(179);
 	}
 
-	int center = (height - textinbutton.length()) / 2;
+	int center = int((height - textinbutton.length()) / 2);
 	Go(x + center, y);
 	cout << textinbutton;
 }
@@ -72,7 +72,8 @@ status Key(char a)
 	case 27: return ESC;
 	case 9: return TAB;
 	case 32: return SPACE;
-	case 115: return SAVE;
+	case 108: return SAVE;
+	case 116: return LOAD;
 	}
 	return TRASH;
 }

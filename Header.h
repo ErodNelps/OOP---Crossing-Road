@@ -28,7 +28,7 @@ using namespace std;
 #pragma pack(1)
 #pragma pack(pop)
 
-enum status { UP, DOWN, LEFT, RIGHT, ENTER, ESC, TAB, TRASH, SPACE, SAVE };
+enum status { UP, DOWN, LEFT, RIGHT, ENTER, ESC, TAB, TRASH, SPACE, SAVE , LOAD};
 class Coordinate
 {
 private:
@@ -69,67 +69,86 @@ public:
 	void Reset(int width, int height);
 };
 
+class Timer : public Character
+{
+private:
+	int time;
+	int countdown;
+	bool status;
+	int chance;
+public:
+	Timer();
+	void SetUp(bool status, int countdown);
+	void Targer(int target);
+	void Disappear();
+	void Appear();
+	bool Update();
+	bool Status();
+	bool CountDown();
+	int Chance();
+};
+
 class NPC : public Character
 {
 protected:
 	bool move;
 	int speed;
 	int max;
-	int distance;
-	int monitor;
+	bool go;
 public:
-	NPC(int x, int y, int distance, int max);
+	NPC(int x, int y, int max, bool go);
 	void Move();
 	void virtual Appear() = 0;
 	bool Speed();
-	bool Distance();
+	void SetSpeed(int speed);
 };
 
 class NPMC : public NPC
 {
 public:
-	NPMC(int x, int y, int distance, int max) : NPC(x, y, distance, max) {};
+	NPMC(int x, int y, int max, bool go) : NPC(x, y, max, go) {};
 	void virtual Appear() = 0;
 };
 
 class NPLC : public NPC
 {
 public:
-	NPLC(int x, int y, int distance, int max) : NPC(x, y, distance, max) {};
+	NPLC(int x, int y, int max, bool go) : NPC(x, y, max, go) {};
 	void virtual Appear() = 0;
 };
 
 class Car : public NPMC
 {
 public:
-	Car(int x, int y, int distance, int max) : NPMC(x, y, distance, max) {};
+	Car(int x, int y, int max, bool go) : NPMC(x, y, max, go) {};
 	void Appear();
 };
 
 class Truck : public NPMC
 {
 public:
-	Truck(int x, int y, int distance, int max) : NPMC(x, y, distance, max) {};
+	Truck(int x, int y, int max, bool go) : NPMC(x, y, max, go) {};
 	void Appear();
 };
 
 class Snake : public NPLC
 {
 public:
-	Snake(int x, int y, int distance, int max) : NPLC(x, y, distance, max) {};
+	Snake(int x, int y, int max, bool go) : NPLC(x, y, max, go) {};
 	void Appear();
 };
 
 class Bird : public NPLC
 {
 public:
-	Bird(int x, int y, int distance, int max) : NPLC(x, y, distance, max) {};
+	Bird(int x, int y, int max, bool go) : NPLC(x, y, max, go) {};
 	void Appear();
 };
 class Game
 {
 private:
 	Player player;
+	Timer timer;
 	vector<NPMC*> machine;
 	vector<NPLC*> animal;
 	int life;
@@ -162,6 +181,9 @@ public:
 	void ResetLevel(bool status);
 	void Allocate();
 	void NewGame();
+	void SetTimer();
+	void UpdateTimer();
+	void LoadingScreeen();
 };
 
 void Go(int x, int y);
