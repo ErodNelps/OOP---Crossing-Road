@@ -15,6 +15,7 @@ Game::Game()
 }
 void Game::NewGame()
 {
+	PlaySound(NULL, NULL, 0);
 	this->life = 2;
 	this->level = 1;
 	this->width = 100;
@@ -261,39 +262,61 @@ void Game::Start()
 		}
 	}
 }
-void Game::Load()
+
+void Game::Load()//string filename
 {
 	this->status = 0;
-	FILE *file;
-	file = fopen("Data.txt", "r");
-	fscanf(file, "%i %i", &this->life, &this->level);
-	fscanf(file, " %i %i", &this->player.x, &this->player.y);
-	for (unsigned i = 0; i < this->animal.size(); i++)
+	ifstream save("Save.bin", ios::binary);
+	if (!save.is_open())
 	{
-		fscanf(file, " %i %i", &this->animal[i]->x, &this->animal[i]->y);
+		cout << "Can't open save file! File might got corrupted!\n";
+		return;
 	}
-	for (unsigned i = 0; i < this->machine.size(); i++)
+	else 
 	{
-		fscanf(file, " %i %i", &this->machine[i]->x, &this->machine[i]->y);
+		save.read((char*)&this->life, sizeof(int));
+		save.read((char*)&this->level, sizeof(int));
+		save.read((char*)&this->player.x, sizeof(int));
+		save.read((char*)&this->player.y, sizeof(int));
+		for (unsigned i = 0; i < this->animal.size(); i++)
+		{
+			save.read((char*)&this->animal[i]->x, sizeof(int));
+			save.read((char*)&this->animal[i]->y, sizeof(int));
+		}
+		for (unsigned i = 0; i < this->machine.size(); i++)
+		{
+			save.read((char*)&this->machine[i]->x, sizeof(int));
+			save.read((char*)&this->machine[i]->y, sizeof(int));
+		}
 	}
-	fclose(file);
+	save.close();
 }
 
-void Game::Save()
+void Game::Save()//string filename
 {
-	FILE *file;
-	file = fopen("Data.txt", "w");
-	fprintf(file, "%i %i", this->life, this->level);
-	fprintf(file, " %i %i", this->player.x, this->player.y);
-	for (unsigned i = 0; i < this->animal.size(); i++)
+	ofstream save("Save.bin", ios::binary);
+	if (!save.is_open())
 	{
-		fprintf(file, " %i %i", this->animal[i]->x, this->animal[i]->y);
+		cout << "Can't open save file! File might got corrupted!\n";
+		return;
 	}
-	for (unsigned i = 0; i < this->machine.size(); i++)
-	{
-		fprintf(file, " %i %i", this->machine[i]->x, this->machine[i]->y);
+	else {
+		save.write((char*)&this->life, sizeof(int));
+		save.write((char*)&this->level, sizeof(int));
+		save.write((char*)&this->player.x, sizeof(int));
+		save.write((char*)&this->player.y, sizeof(int));
+		for (unsigned i = 0; i < this->animal.size(); i++)
+		{
+			save.write((char*)&this->animal[i]->x, sizeof(int));
+			save.write((char*)&this->animal[i]->y, sizeof(int));
+		}
+		for (unsigned i = 0; i < this->machine.size(); i++)
+		{
+			save.write((char*)&this->machine[i]->x, sizeof(int));
+			save.write((char*)&this->machine[i]->y, sizeof(int));
+		}
 	}
-	fclose(file);
+	save.close();
 	Go(90, 1);
 	cout << "SAVING";
 	for (int i = 0; i < 3; i++)
@@ -585,15 +608,19 @@ void Game::DrawGame(int color, string text)
 	cout << "PLAYING";
 	Go(this->width / 2, 2);
 	cout <<"Level " <<  this->level;
+	for (int i = 9; i < 9 + 6*4 ; i+=4)
+	{
+		Go(1, i);
+		cout << "<" << char(BLOCK) << ">";
+	}
 }
 
 void Game::Menu()
 {
 	SetWindowSize(900, 500);
-	this->LoadingScreen();
 	ClearScreen();
 	bool menu = TRUE;
-
+	PlaySound(TEXT("FunMenu.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
 	SetTextAttribute(LIGHTMAGNETA);
 	cout << "\n\n\n\n\n";
 	cout << " ::::::  :::::::   ::::::   ::::::   ::::::  :::::::  ::::  :::  :::::: " << endl;
@@ -621,6 +648,7 @@ void Game::Menu()
 		DrawButton(85, location, 2, 22, WHITE, title[i]);
 		location += 5;
 	}
+	
 	location = 5;
 	char c = ' ';
 	while (menu)

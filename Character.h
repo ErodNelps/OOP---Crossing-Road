@@ -27,6 +27,7 @@ using namespace std;
 #pragma pack (push)
 #pragma pack(1)
 #pragma pack(pop)
+#pragma comment(lib,"winmm.lib")
 
 enum status { UP, DOWN, LEFT, RIGHT, ENTER, ESC, TAB, TRASH, SPACE, SAVE , LOAD};
 
@@ -79,7 +80,6 @@ private:
 	int chance;
 public:
 	Timer();
-	void DrawSignal();
 	void SetUp(bool status, int countdown);
 	void Targer(int target);
 	void Disappear();

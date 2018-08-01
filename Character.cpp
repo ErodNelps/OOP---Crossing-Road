@@ -135,12 +135,12 @@ bool Player::Win()
 void Player::Appear()
 {
 	Go(this->x, this->y);
-	cout << "&";
+	cout << " " << char(153) << " ";
 
 	//cout << " " << char(BOTTOMHALF) << "  " << char(BOTTOMHALF) << " ";
 
 	Go(this->x, this->y + 1);
-	cout << char(BLOCK);
+	cout << char(213) << char(BLOCK) << char(184);
 	//cout << char(TOPHALF) << " " << char(BLOCK) << char(BLOCK) << " " << char(TOPHALF);
 
 }
@@ -233,57 +233,57 @@ void Truck::Appear()
 
 	if (this->x == 96)
 	{
-		cout << "  " << char(BLOCK) << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK) << " ";
 		Go(this->x, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
 		Go(1, this->y);
-		cout << char(BLOCK);
+		cout << " ";
 		Go(1, this->y + 1);
 		cout << char(BLOCK);
 	}
 	else if (this->x == 97)
 	{
-		cout << "  " << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
 		Go(this->x, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
 		Go(1, this->y);
-		cout << char(BLOCK) << char(BLOCK);
+		cout << "  ";
 		Go(1, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK);
 	}
 	else if (this->x == 98)
 	{
-		cout << "  " << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK) << char(BLOCK);
 		Go(this->x, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK);
 		Go(1, this->y);
-		cout << char(BLOCK) << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK) << "  ";
 		Go(1, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK);
 	}
 	else if (this->x == 99)
 	{
-		cout << "  ";
+		cout << char(BLOCK) << char(BLOCK);
 		Go(this->x, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK);
 		Go(1, this->y);
-		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK) << "  ";
 		Go(1, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
 	}
 	else if (this->x == 100)
 	{
-		cout << " ";
+		cout << char(BLOCK);
 		Go(this->x, this->y + 1);
 		cout << char(BLOCK);
 		Go(1, this->y);
-		cout << " " << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << "  ";
 		Go(1, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
 	}
 	else
 	{
-		cout << "  " << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK) << "  ";
 
 		Go(x, y + 1);
 
@@ -427,13 +427,17 @@ void Timer::Targer(int target)
 }
 void Timer::Disappear()
 {
-	Go(this->x, this->y);
-	cout << "   ";
+	Go(1, this->y);
+	SetTextAttribute(LIGHTGREEN);
+	cout << "<" << char(BLOCK) << ">";
 }
 void Timer::Appear()
 {
-	Go(this->x, this->y);
-	cout << "<" << this->time << ">";
+	Go(1, this->y);
+	SetTextAttribute(RED);
+	cout << "<" << char(BLOCK) << ">";
+	SetTextAttribute(LIGHTGREEN);
+	//Go(this->x, this->y);
 }
 bool Timer::Update()
 {
