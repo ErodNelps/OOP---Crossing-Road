@@ -14,6 +14,8 @@ private:
 	int width;
 	int key;
 	int status;
+	int selection;
+	bool playing;
 public:
 	Game();
 	void DrawGame(int color, string text);
@@ -25,7 +27,7 @@ public:
 	void Exit(HANDLE);
 	void Start();
 	void Operation();
-	void Load();
+	void Load(bool sub);
 	void Save();
 	void Pause(HANDLE h);
 	void Resume(HANDLE h);
@@ -41,4 +43,5 @@ public:
 	void SetTimer();
 	void UpdateTimer();
 	void LoadingScreen();
+	bool PlayingMenu(int key);
 };

@@ -3,6 +3,8 @@
 
 Game::Game()
 {
+	this->playing = true;
+	this->selection = 0;
 	this->life = 2;
 	this->level = 1;
 	this->width = 100;
@@ -11,11 +13,11 @@ Game::Game()
 	this->status = 1;
 	this->Allocate();
 	this->player.Reset(this->width, this->height);
-	
 }
 void Game::NewGame()
 {
 	PlaySound(NULL, NULL, 0);
+	this->playing = true;
 	this->life = 2;
 	this->level = 1;
 	this->width = 100;
@@ -111,23 +113,27 @@ void Game::Reset(bool status)
 	this->key = 6;
 	string text;
 	SetTextAttribute(RED);
-	Go(90, 1);
+	Go(75, 1);
 	if (status)
 	{
-		text = "WIN       ";
+		text = "               WIN       ";
 		cout << text;
+		Go(75, 2);
+		cout << "                         ";
 	}
 	else
 	{
-		text = "DEAD      ";
+		text = "               DEAD      ";
 		cout << text;
+		Go(75, 2);
+		cout << "                         ";
 	}
 	SetTextAttribute(LIGHTGREEN);
 	this->player.Sparkle();
 	for (int i = 2; i > 0; i--)
 	{
-		Go(90, 1);
-		cout << "   " << i << "   ";
+		Go(75, 1);
+		cout << "               " << i << "         ";
 		Sleep(500);
 	}
 
@@ -163,7 +169,17 @@ void Game::Reset(bool status)
 		Go(i, 5);
 		cout << char(186);
 	}
+	for (int i = 0; i < 9; i += 4)
+	{
+		Go(98, 17 + i);
+		SetTextAttribute(DARKGRAY);
+		cout << char(BOTTOMHALF);
+		Go(99, 17 + i);
+		SetTextAttribute(GREEN);
+		cout << char(BOTTOMHALF);
+	}
 
+	SetTextAttribute(LIGHTGREEN);
 	if (this->life == 0)
 	{
 		this->DeleteObjects();
@@ -215,18 +231,18 @@ void Game::Operation()
 void Game::Start()
 {
 	this->DrawGame(LIGHTGREEN, "CROSSING ROAD");
-
 	thread operation(bind(&Game::Operation,this));
+	this->key = 7;
 
 	while (TRUE)
 	{
 		this->key = Key(this->key);
-		if (this->life!= 0)
+		if (this->life != 0)
 		{
 			if (this->key == 5)
 			{
 				this->Exit(operation.native_handle());
-				this->Menu();
+				exit(0);
 			}
 			else
 			{
@@ -238,7 +254,14 @@ void Game::Start()
 				{
 					this->Pause(operation.native_handle());
 					this->Save();
-					this->Resume((HANDLE)operation.native_handle());
+				}
+				else if (key == 10)
+				{
+					this->Pause(operation.native_handle());
+					this->life = 0;
+					this->playing = true;
+					this->Load(true);
+					this->Start();
 				}
 			}
 		}
@@ -249,12 +272,45 @@ void Game::Start()
 				this->NewGame();
 				this->Start();
 			}
-			else if(this->key == 5)
+			else if (this->key == 5)
 			{
 				this->Exit(operation.native_handle());
 				this->Menu();
 			}
 		}
+
+		if (!this->playing)
+		{
+			if (this->PlayingMenu(this->key))
+				switch (this->selection)
+				{
+				case 0:
+				{
+					this->Pause(operation.native_handle());
+					this->Save();
+					break;
+				}
+				case 1:
+				{
+					this->life = 0;
+					this->playing = true;
+					this->Load(true);
+					this->Start();
+					break;
+				}
+				case 2:
+				{
+					break;
+				}
+				case 3:
+				{
+					this->Exit(operation.native_handle());
+					exit(0);
+					break;
+				}
+				}
+		}
+
 		if (this->status++ == 0)
 		{
 			Sleep(50);
@@ -263,90 +319,208 @@ void Game::Start()
 	}
 }
 
-void Game::Load()//string filename
+void Game::Load(bool sub)
 {
-	this->status = 0;
-	ifstream save("Save.bin", ios::binary);
-	if (!save.is_open())
+	string name;
+
+	if (sub)
+		Go(47, 35);
+	else
+		Go(47, 25);
+	cout << "FILE: ";
+	cin >> name;
+
+	ifstream file(name, ios::binary);
+	if (!file.is_open())
 	{
-		cout << "Can't open save file! File might got corrupted!\n";
+		if (sub)
+			Go(47, 35);
+		else
+			Go(47, 25);
+		for (int i = 37; i < 101; i++)
+			cout << " ";
+		if (sub)
+			Go(47, 35);
+		else
+			Go(47, 25);
+		cout << "INVALID FILE!";
+		Sleep(1000);
 		return;
 	}
-	else 
+	else
 	{
-		save.read((char*)&this->life, sizeof(int));
-		save.read((char*)&this->level, sizeof(int));
-		save.read((char*)&this->player.x, sizeof(int));
-		save.read((char*)&this->player.y, sizeof(int));
-		for (unsigned i = 0; i < this->animal.size(); i++)
+		int life, level, speed, acceleration;
+
+		file.read((char*)&life, sizeof(int));
+		file.read((char*)&level, sizeof(int));
+
+		int quantity = level < 5 ? this->level : 5;
+		vector<NPMC*> machine;
+		vector<NPLC*> animal;
+
+		acceleration = level > 5 ? (level - 5) * 2 : 0;
+		speed = 20 - acceleration > 5 ? 20 - acceleration : 5;
+
+		for (int i = 0; i < quantity; i++)
 		{
-			save.read((char*)&this->animal[i]->x, sizeof(int));
-			save.read((char*)&this->animal[i]->y, sizeof(int));
+			machine.push_back(new Car(1 + i * ((width - 6 * quantity) / quantity + 6), 27, speed, false));
+			machine.push_back(new Car(1 + i * ((width - 6 * quantity) / quantity + 6), 19, speed, false));
 		}
-		for (unsigned i = 0; i < this->machine.size(); i++)
+
+		speed = 25 - acceleration > 5 ? 25 - acceleration : 5;
+		for (int i = 0; i < quantity; i++)
 		{
-			save.read((char*)&this->machine[i]->x, sizeof(int));
-			save.read((char*)&this->machine[i]->y, sizeof(int));
+			machine.push_back(new Truck((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 23, speed, true));
 		}
+
+		speed = 40 - acceleration > 5 ? 40 - acceleration : 5;
+		for (int i = 0; i < quantity; i++)
+		{
+			animal.push_back(new Snake((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 7, speed, true));
+			animal.push_back(new Snake((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 15, speed, true));
+		}
+
+		speed = 30 - acceleration > 5 ? 30 - acceleration : 5;
+		for (int i = 0; i < quantity; i++)
+		{
+			animal.push_back(new Bird(1 + i * ((width - 6 * quantity) / quantity + 6), 11, speed, false));
+		}
+
+		for (int i = 0; i < quantity * 3; i++)
+		{
+			file.read((char*)&animal[i]->x, sizeof(int));
+			file.read((char*)&animal[i]->y, sizeof(int));
+		}
+		for (int i = 0; i < quantity * 3; i++)
+		{
+			file.read((char*)&machine[i]->x, sizeof(int));
+			file.read((char*)&machine[i]->y, sizeof(int));
+		}
+
+
+
+		file.read((char*)&this->player.x, sizeof(int));
+		file.read((char*)&this->player.y, sizeof(int));
+		this->level = level;
+		this->life = life;
+		this->machine = machine;
+		this->animal = animal;
+
 	}
-	save.close();
+	file.close();
+
+	Go(75, 1);
+	cout << "               LOADING   ";
+	Go(75, 2);
+	cout << "                         ";
+	for (int i = 0; i < 3; i++)
+	{
+		Go(97 + i, 1);
+		cout << ".";
+		Sleep(1000);
+	}
+
+	Go(47, 35);
+	for (int i = 37; i < this->width + 1; i++)
+	{
+		cout << " ";
+	}
+
+	this->status = 0;
 }
 
-void Game::Save()//string filename
+void Game::Save()
 {
-	ofstream save("Save.bin", ios::binary);
-	if (!save.is_open())
+	string name;
+	Go(47, 35);
+	cout << "FILE: ";
+	cin >> name;
+
+	ofstream file(name, ios::binary);
+	if (!file.is_open())
 	{
-		cout << "Can't open save file! File might got corrupted!\n";
+		Go(47, 35);
+		for (int i = 47; i < 101; i++)
+			cout << " ";
+		Go(47, 35);
+		cout << "INVALID FILE";
+		Sleep(1000);
 		return;
 	}
-	else {
-		save.write((char*)&this->life, sizeof(int));
-		save.write((char*)&this->level, sizeof(int));
-		save.write((char*)&this->player.x, sizeof(int));
-		save.write((char*)&this->player.y, sizeof(int));
+	else
+	{
+		file.write((char*)&this->life, sizeof(int));
+		file.write((char*)&this->level, sizeof(int));
 		for (unsigned i = 0; i < this->animal.size(); i++)
 		{
-			save.write((char*)&this->animal[i]->x, sizeof(int));
-			save.write((char*)&this->animal[i]->y, sizeof(int));
+			file.write((char*)&this->animal[i]->x, sizeof(int));
+			file.write((char*)&this->animal[i]->y, sizeof(int));
 		}
 		for (unsigned i = 0; i < this->machine.size(); i++)
 		{
-			save.write((char*)&this->machine[i]->x, sizeof(int));
-			save.write((char*)&this->machine[i]->y, sizeof(int));
+			file.write((char*)&this->machine[i]->x, sizeof(int));
+			file.write((char*)&this->machine[i]->y, sizeof(int));
 		}
+		file.write((char*)&this->player.x, sizeof(int));
+		file.write((char*)&this->player.y, sizeof(int));
 	}
-	save.close();
-	Go(90, 1);
-	cout << "SAVING";
+	file.close();
+
+	Go(75, 1);
+	cout << "               SAVING    ";
+	Go(75, 2);
+	cout << "                         ";
 	for (int i = 0; i < 3; i++)
 	{
 		Go(96 + i, 1);
 		cout << ".";
 		Sleep(1000);
 	}
+
+	Go(47, 35);
+	for (int i = 47; i < 101; i++)
+		cout << " ";
+
+	Go(75, 1);
+	cout << "PRESS [SPACE] TO CONTINUE";
+	Go(75, 2);
+	cout << "   PRESS [ESC] TO EXIT";
+
+	Go(47, 35);
+	cout << "   DONE";
+
+	Sleep(1000);
+
+	Go(37, 35);
+	for (int i = 37; i < 101; i++)
+		cout << " ";
 }
 
 void Game::Pause(HANDLE h)
 {
-	string text = "PAUSE     ";
-	Go(90, 1);
-	cout << text;
+	Go(75, 1);
+	cout << "               PAUSE     ";
+	Go(75, 2);
+	cout << "                         ";
+	ResumeThread(h);
 	SuspendThread(h);
+	this->playing = false;
 }
-
 void Game::Resume(HANDLE h)
 {
-	string text = "PLAYING   ";
-	Go(90, 1);
+	string text = "               PLAYING   ";
+	Go(75, 1);
 	cout << text;
+	Go(75, 2);
+	cout << "                         ";
 	ResumeThread(h);
+	this->playing = true;
 }
 
 void Game::UpdatePlayer(int move)
 {
 	this->player.Disappear();
-	
+
 	switch (move)
 	{
 	case 0:
@@ -373,7 +547,8 @@ void Game::UpdatePlayer(int move)
 
 	this->player.Appear();
 }
-void Game::UpdateNPMCs() 
+
+void Game::UpdateNPMCs()
 {
 	for (unsigned i = 0; i < this->machine.size(); i++)
 	{
@@ -463,7 +638,7 @@ void Game::CreateObjects()
 	}
 
 	for (unsigned i = 0; i < this->animal.size(); i++)
-	{ 
+	{
 		this->animal[i]->Appear();
 	}
 }
@@ -477,7 +652,7 @@ void Game::SetTimer()
 	if ((rand() % 1000) > this->timer.Chance())
 		return;
 
-	switch (int(rand() % 5))
+	switch (int(rand() % 3))
 	{
 	case 0:
 	{
@@ -492,21 +667,6 @@ void Game::SetTimer()
 	case 2:
 	{
 		target = 19;
-		break;
-	}
-	case 3:
-	{
-		target = 15;
-		break;
-	}
-	case 4:
-	{
-		target = 11;
-		break;
-	}
-	case 5:
-	{
-		target = 7;
 		break;
 	}
 	}
@@ -524,7 +684,7 @@ void Game::SetTimer()
 	}
 
 	this->timer.SetUp(true, 100);
-	this->timer.Targer(target + 2);
+	this->timer.Targer(target - 1);
 	this->timer.Appear();
 }
 
@@ -542,7 +702,7 @@ void Game::UpdateTimer()
 void Game::DrawGame(int color, string text)
 {
 	ClearScreen();
-	SetWindowSize(850, 600);
+	SetWindowSize(850, 750);
 	HideCursor();
 	SetTextAttribute(color);
 	Go(0, 0);
@@ -600,6 +760,20 @@ void Game::DrawGame(int color, string text)
 	Go(center + 2, 1);
 	cout << text;
 	
+	Go(0, 6);
+	cout << char(204);
+	for (int i = 0; i < this->width; i++)
+	{
+		cout << char(205);
+	}
+	cout << char(185);
+	for (int i = 1; i < this->width + 1; i++)
+	{
+		Go(i, 4);
+		cout << char(186);
+		Go(i, 5);
+		cout << char(186);
+	}
 	string destination = "DESTINATION";
 	Go(int((this->width - destination.length()) / 2 + 2), 5);
 	cout << destination;
@@ -607,12 +781,61 @@ void Game::DrawGame(int color, string text)
 	Go(90, 1);
 	cout << "PLAYING";
 	Go(this->width / 2, 2);
-	cout <<"Level " <<  this->level;
-	for (int i = 9; i < 9 + 6*4 ; i+=4)
+	cout << this->level;
+
+
+	for (int i = this->height; i < height + 8; i++)
+	{
+		Go(0, i);
+		cout << char(186);
+	}
+
+	Go(0, this->height + 8);
+	cout << char(200);
+
+	for (int i = 0; i < this->width; i++)
+		cout << char(205);
+	cout << char(188);
+
+	for (int i = this->height; i < this->height + 8; i++)
+	{
+		Go(this->width + 1, i);
+		cout << char(186);
+	}
+
+	Go(0, this->height);
+	cout << char(204);
+
+	Go(0, this->height + 2);
+	cout << char(204);
+
+	for (int i = 1; i <= this->width; i++)
+		cout << char(205);
+
+	Go(this->width + 1, this->height);
+	cout << char(185);
+
+	Go(this->width + 1, this->height + 2);
+	cout << char(185);
+
+	this->PlayingMenu(-1);
+
+	for (int i = 0; i < 9; i += 4)
+	{
+		Go(98, 17 + i);
+		SetTextAttribute(DARKGRAY);
+		cout << char(BOTTOMHALF);
+		Go(99, 17 + i);
+		SetTextAttribute(GREEN);
+		cout << char(BOTTOMHALF);
+	}
+
+	SetTextAttribute(LIGHTGREEN);
+	/*for (int i = 9; i < 9 + 6*4 ; i+=4)
 	{
 		Go(1, i);
 		cout << "<" << char(BLOCK) << ">";
-	}
+	}*/
 }
 
 void Game::Menu()
@@ -639,7 +862,7 @@ void Game::Menu()
 	cout << "\t\t#+#  #+# #+#  #+# #+#   #+# #+#  #+#" << endl;
 	cout << "\t\t###  ###  ######  ###   ### ####### " << endl;
 
-	string title[] = { "New game", "Load game", "Setting", "Exit game" };
+	string title[] = { "NEW GAME", "LOAD GAME", "SETTINGS", "EXIT GAME" };
 	int n = sizeof(title) / sizeof(title[0]);
 	DrawButton(85, 5, 2, 22, LIGHTGREEN, title[0]);
 	int location = 10;
@@ -696,7 +919,7 @@ void Game::Menu()
 			}
 			case 10:
 			{
-				this->Load();
+				this->Load(false);
 				this->Start();
 				menu = FALSE;
 				return;
@@ -716,6 +939,7 @@ void Game::Menu()
 			exit(0);
 	}
 }
+
 void Game::LoadingScreen()
 {
 	ClearScreen();
@@ -751,4 +975,55 @@ void Game::LoadingScreen()
 		Sleep(60);
 	}
 	Sleep(700);
+}
+
+bool Game::PlayingMenu(int key)
+{
+	if (key == 4)
+		return true;
+
+	switch (key)
+	{
+	case 0:
+	{
+		this->selection -= 1;
+		if (this->selection == -1)
+			this->selection = 3;
+		break;
+	}
+	case 1:
+	{
+		this->selection += 1;
+		break;
+	}
+	case 2:
+	{
+		this->selection -= 1;
+		if (this->selection == -1)
+			this->selection = 3;
+		break;
+	}
+	case 3:
+	{
+		this->selection += 1;
+		break;
+	}
+	}
+
+	this->selection = this->selection % 4;
+
+	bool menu = true;
+	string title[] = { "SAVE GAME", "LOAD GAME", "SETTINGS", "EXIT GAME" };
+	int location[4] = { 6, 30, 54, 78 };
+	int n = sizeof(title) / sizeof(title[0]);
+
+	DrawButton(location[this->selection], 39, 2, 20, LIGHTGREEN, title[this->selection]);
+	for (int i = 0; i < n; i++)
+	{
+		if (i != this->selection)
+			DrawButton(location[i], 39, 2, 20, WHITE, title[i]);
+	}
+	SetTextAttribute(LIGHTGREEN);
+
+	return false;
 }

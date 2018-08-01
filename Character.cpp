@@ -414,11 +414,11 @@ void Snake::Appear()
 		cout << char(TOPHALF) << "  " << char(TOPHALF) << char(TOPHALF) << " ";
 	}
 }
-Timer::Timer() 
+Timer::Timer()
 {
-	this->x = 51;
+	this->x = 98;
 	this->status = false;
-	this->chance = 10;
+	this->chance = 100;
 }
 void Timer::Targer(int target)
 {
@@ -427,17 +427,31 @@ void Timer::Targer(int target)
 }
 void Timer::Disappear()
 {
-	Go(1, this->y);
+	Go(this->x, this->y - 1);
+	SetTextAttribute(DARKGRAY);
+	cout << char(BOTTOMHALF);
+
+	Go(this->x + 1, this->y - 1);
+	SetTextAttribute(GREEN);
+	cout << char(BOTTOMHALF);
+
 	SetTextAttribute(LIGHTGREEN);
-	cout << "<" << char(BLOCK) << ">";
+	Go(this->x - 1, this->y);
+	cout << "    ";
 }
 void Timer::Appear()
 {
-	Go(1, this->y);
+	Go(this->x, this->y - 1);
 	SetTextAttribute(RED);
-	cout << "<" << char(BLOCK) << ">";
+	cout << char(BOTTOMHALF);
+
+	Go(this->x + 1, this->y - 1);
+	SetTextAttribute(DARKGRAY);
+	cout << char(BOTTOMHALF);
+
 	SetTextAttribute(LIGHTGREEN);
-	//Go(this->x, this->y);
+	Go(this->x - 1, this->y);
+	cout << "<0" << this->time << ">";
 }
 bool Timer::Update()
 {
@@ -445,7 +459,7 @@ bool Timer::Update()
 	if (this->countdown == 0)
 	{
 		this->status = false;
-		this->chance = 10;
+		this->chance = 100;
 		this->Disappear();
 	}
 	return this->status;
