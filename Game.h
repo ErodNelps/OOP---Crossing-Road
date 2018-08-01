@@ -16,6 +16,14 @@ private:
 	int status;
 	int selection;
 	bool playing;
+	bool sound;
+	int bird;
+	int snake;
+	int settings;
+	int carspeed;
+	int truckspeed;
+	int snakespeed;
+	int birdspeed;
 public:
 	Game();
 	void DrawGame(int color, string text);
@@ -27,7 +35,7 @@ public:
 	void Exit(HANDLE);
 	void Start();
 	void Operation();
-	void Load(bool sub);
+	bool Load(bool sub);
 	void Save();
 	void Pause(HANDLE h);
 	void Resume(HANDLE h);
@@ -44,4 +52,5 @@ public:
 	void UpdateTimer();
 	void LoadingScreen();
 	bool PlayingMenu(int key);
+	void Mode(bool mode);
 };

@@ -9,10 +9,11 @@ protected:
 	bool go;
 public:
 	NPC(int x, int y, int max, bool go);
-	void Move();
+	void virtual Move();
 	void virtual Appear() = 0;
-	bool Speed();
-	void SetSpeed(int speed);
+	bool virtual Speed();
+	void virtual SetSpeed(int speed);
+	void virtual Update(int max);
 };
 
 class NPMC : public NPC
@@ -41,6 +42,7 @@ class Truck : public NPMC
 public:
 	Truck(int x, int y, int max, bool go) : NPMC(x, y, max, go) {};
 	void Appear();
+	void Disappear();
 };
 
 class Snake : public NPLC

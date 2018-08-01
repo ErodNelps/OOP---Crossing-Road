@@ -61,10 +61,17 @@ bool NPC::Speed()
 	
 	return false;
 }
+
 void NPC::SetSpeed(int speed)
 {
 	this->speed = speed;
 }
+
+void NPC::Update(int max)
+{
+	this->max = max;
+}
+
 void Character::Disappear()
 {
 	Go(this->x, this->y);
@@ -126,23 +133,21 @@ void Character::Disappear()
 		cout << "      ";
 	}
 }
+
 bool Player::Win()
 {
 	if (this->y == 4)
 		return true;
 	return false;
 }
+
 void Player::Appear()
 {
 	Go(this->x, this->y);
 	cout << " " << char(153) << " ";
 
-	//cout << " " << char(BOTTOMHALF) << "  " << char(BOTTOMHALF) << " ";
-
 	Go(this->x, this->y + 1);
 	cout << char(213) << char(BLOCK) << char(184);
-	//cout << char(TOPHALF) << " " << char(BLOCK) << char(BLOCK) << " " << char(TOPHALF);
-
 }
 void Player::Reset(int width, int height)
 {
@@ -291,6 +296,64 @@ void Truck::Appear()
 	}
 }
 
+void Truck::Disappear()
+{
+	Go(this->x, this->y);
+
+	if (this->x == 96)
+	{
+		cout << "    ";
+		Go(this->x, this->y + 1);
+		cout << "     ";
+		Go(1, this->y + 1);
+		cout << " ";
+	}
+	else if (this->x == 97)
+	{
+		cout << "    ";
+		Go(this->x, this->y + 1);
+		cout << "    ";
+		Go(1, this->y + 1);
+		cout << "  ";
+	}
+	else if (this->x == 98)
+	{
+		cout << "   ";
+		Go(this->x, this->y + 1);
+		cout << "   ";
+		Go(1, this->y);
+		cout << " ";
+		Go(1, this->y + 1);
+		cout << "   ";
+	}
+	else if (this->x == 99)
+	{
+		cout << "  ";
+		Go(this->x, this->y + 1);
+		cout << "  ";
+		Go(1, this->y);
+		cout << "  ";
+		Go(1, this->y + 1);
+		cout << "    ";
+	}
+	else if (this->x == 100)
+	{
+		cout << " ";
+		Go(this->x, this->y + 1);
+		cout << " ";
+		Go(1, this->y);
+		cout << "   ";
+		Go(1, this->y + 1);
+		cout << "     ";
+	}
+	else
+	{
+		cout << "    ";
+		Go(this->x, this->y + 1);
+		cout << "      ";
+	}
+}
+
 void Bird::Appear()
 {
 	Go(this->x, this->y);
@@ -417,6 +480,7 @@ void Snake::Appear()
 Timer::Timer()
 {
 	this->x = 98;
+	this->y = 26;
 	this->status = false;
 	this->chance = 100;
 }
@@ -461,6 +525,7 @@ bool Timer::Update()
 		this->status = false;
 		this->chance = 100;
 		this->Disappear();
+		PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
 	}
 	return this->status;
 }
