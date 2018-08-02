@@ -85,10 +85,10 @@ status Key(char a)
 	a = _getch();
 	switch (a)
 	{
-	case 72: return UP;
-	case 75: return LEFT;
-	case 77: return RIGHT;
-	case 80: return DOWN;
+	case 'w': return UP;
+	case 'a': return LEFT;
+	case 'd': return RIGHT;
+	case 's': return DOWN;
 	case 13: return ENTER;
 	case 27: return ESC;
 	case 9: return TAB;

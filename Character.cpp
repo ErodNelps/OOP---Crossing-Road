@@ -149,6 +149,15 @@ void Player::Appear()
 	Go(this->x, this->y + 1);
 	cout << char(213) << char(BLOCK) << char(184);
 }
+
+void Player::Disappear()
+{
+	Go(this->x + 1, y);
+	cout << " ";
+	Go(this->x, this->y + 1);
+	cout << "   ";
+}
+
 void Player::Reset(int width, int height)
 {
 	this->status = true;
@@ -550,3 +559,5 @@ int Timer::Chance()
 {
 	return ++this->chance;
 }
+
+MusicManage* MusicManage::instance = nullptr;

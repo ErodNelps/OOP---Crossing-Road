@@ -24,7 +24,10 @@ Game::Game()
 }
 void Game::NewGame()
 {
-	PlaySound(NULL, NULL, 0);
+	MusicPlayer.openFromFile("Sound\\LetsGo.wav");
+	MusicPlayer.setVolume(80);
+	MusicPlayer.play();
+	MusicPlayer.setLoop(true);
 	this->playing = true;
 	this->life = 2;
 	this->level = 1;
@@ -252,7 +255,6 @@ void Game::Operation()
 		}
 		Sleep(50);
 	}
-
 	return;
 }
 void Game::Start()
@@ -278,7 +280,10 @@ void Game::Start()
 				if (key == 6)
 					this->Pause(operation.native_handle());
 				else if (key == 8)
+				{
+					MusicPlayer.play();
 					this->Resume((HANDLE)operation.native_handle());
+				}
 				else if (key == 9)
 				{
 					this->Pause(operation.native_handle());
@@ -312,6 +317,7 @@ void Game::Start()
 
 		if (!this->playing)
 		{
+			MusicPlayer.pause();
 			if (this->PlayingMenu(this->key))
 				switch (this->selection)
 				{
@@ -1058,7 +1064,10 @@ void Game::Menu()
 	SetWindowSize(900, 500);
 	ClearScreen();
 	bool menu = TRUE;
-	PlaySound(TEXT("Sound//FunMenu.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+	MusicPlayer.openFromFile("Sound\\FunMenu.wav");
+	MusicPlayer.play();
+	MusicPlayer.setLoop(true);
+	
 	SetTextAttribute(LIGHTMAGNETA);
 	cout << "\n\n\n\n\n";
 	cout << " ::::::  :::::::   ::::::   ::::::   ::::::  :::::::  ::::  :::  :::::: " << endl;
@@ -1136,8 +1145,8 @@ void Game::Menu()
 			{
 				if (this->settings == 0)
 				{
+					MusicPlayer.stop();
 					this->NewGame();
-					PlaySound(NULL, NULL, 0);
 					this->Start();
 					menu = FALSE;
 				}
@@ -1163,7 +1172,7 @@ void Game::Menu()
 				{
 					if (this->Load(false))
 					{
-						PlaySound(NULL, NULL, 0);
+						//PlaySound(NULL, NULL, 0);
 						this->Start();
 						menu = FALSE;
 					}
@@ -1201,7 +1210,10 @@ void Game::Menu()
 					if (this->settings == 1)
 					{
 						this->sound = true;
-						PlaySound(TEXT("Sound//FunMenu.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+						//PlaySound(TEXT("FunMenu.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+						MusicPlayer.openFromFile("Sound\\FunMenu.wav");
+						MusicPlayer.play();
+						MusicPlayer.setLoop(true);
 						this->settings = 0;
 						DrawButton(85, 5, 2, 22, LIGHTGREEN, title[this->settings][0]);
 						location = 5;
@@ -1222,7 +1234,9 @@ void Game::Menu()
 				{
 					this->settings = 0;
 					this->sound = false;
-					PlaySound(NULL, NULL, 0);
+					//PlaySound(NULL, NULL, 0);
+					MusicPlayer.stop();
+
 					DrawButton(85, 5, 2, 22, LIGHTGREEN, title[this->settings][0]);
 					location = 5;
 					for (int i = 1; i < 4; i++)
@@ -1331,6 +1345,6 @@ bool Game::PlayingMenu(int key)
 			DrawButton(location[i], 39, 2, 20, WHITE, title[this->settings][i]);
 	}
 	SetTextAttribute(LIGHTGREEN);
-
+	
 	return false;
 }

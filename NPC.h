@@ -40,7 +40,7 @@ public:
 class Truck : public NPMC
 {
 public:
-	Truck(int x, int y, int max, bool go) : NPMC(x, y, max, go) {};
+	Truck(int x, int y, int max, bool go) : NPMC(x, y, max, go) { this->space[0] = 4; };
 	void Appear();
 	void Disappear();
 };

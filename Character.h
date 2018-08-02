@@ -24,12 +24,34 @@ using namespace std;
 #include <fstream>
 #include <processthreadsapi.h>
 #include <vector>
+#include <SFML\Audio.hpp>
 #pragma pack (push)
 #pragma pack(1)
 #pragma pack(pop)
 #pragma comment(lib,"winmm.lib")
 
 enum status { UP, DOWN, LEFT, RIGHT, ENTER, ESC, TAB, TRASH, SPACE, SAVE , LOAD};
+
+class MusicManage {
+	MusicManage() = default;
+
+	static MusicManage* instance;
+	sf::Music music;
+public:
+	static MusicManage* getInstance() {
+		if (instance == nullptr)
+			instance = new MusicManage;
+		return instance;
+	}
+	sf::Music& getMusicObj() {
+		return music;
+	}
+	bool openFromFile(std::string location) {
+		return music.openFromFile(location);
+	}
+};
+
+#define MusicPlayer MusicManage::getInstance()->getMusicObj()
 
 class Coordinate
 {
@@ -52,11 +74,11 @@ public:
 	vector<int> space;
 public:
 	Character() { this->space.push_back(6); this->space.push_back(6); };
+	Character(vector<int> space) { this->space = space; };
 	void virtual Appear() = 0;
-	void Disappear();
-	vector<Coordinate> Space();
-	void Sparkle();
-
+	void virtual Disappear();
+	vector<Coordinate> virtual Space();
+	void virtual Sparkle();
 };
 
 class Player : public Character
@@ -64,8 +86,9 @@ class Player : public Character
 private:
 	bool status;
 public:
-	Player() {};
+	Player() { this->space[0] = 3; this->space[1] = 3; };
 	void Appear();
+	void Disappear();
 	void Update(int x, int y, int width, int height);
 	bool Win();
 	void Reset(int width, int height);
