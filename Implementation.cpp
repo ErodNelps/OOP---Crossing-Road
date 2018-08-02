@@ -77,3 +77,11 @@ status Key(char a)
 	}
 	return TRASH;
 }
+void HideCursor()
+{
+	HANDLE cursor = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO information;
+	information.dwSize = 100;
+	information.bVisible = FALSE;
+	SetConsoleCursorInfo(cursor, &information);
+}

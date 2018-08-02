@@ -49,6 +49,11 @@ void NPC::Move()
 	}
 }
 
+void NPC::Update(int max)
+{
+	this->max = max;
+}
+
 bool NPC::Speed()
 {
 	this->speed--;
@@ -135,12 +140,19 @@ void Player::Appear()
 {
 	Go(this->x, this->y);
 
-	cout << " " << char(BOTTOMHALF) << "  " << char(BOTTOMHALF) << " ";
+	cout << " " << char(153) << " ";
 
 	Go(this->x, this->y + 1);
 
-	cout << char(TOPHALF) << " " << char(BLOCK) << char(BLOCK) << " " << char(TOPHALF);
+	cout << char(213) << char(BLOCK) << char(184);
 
+}
+void Player::Disappear()
+{
+	Go(this->x + 1, y);
+	cout << " ";
+	Go(this->x, this->y + 1);
+	cout << "   ";
 }
 void Player::Reset(int width, int height)
 {
@@ -224,64 +236,116 @@ void Car::Appear()
 		cout << " " << "O" << "  " << "O" << " ";
 	}
 }
+void Truck::Disappear()
+{
+	Go(this->x, this->y);
 
+	if (this->x == 96)
+	{
+		cout << "    ";
+		Go(this->x, this->y + 1);
+		cout << "     ";
+		Go(1, this->y + 1);
+		cout << " ";
+	}
+	else if (this->x == 97)
+	{
+		cout << "    ";
+		Go(this->x, this->y + 1);
+		cout << "    ";
+		Go(1, this->y + 1);
+		cout << "  ";
+	}
+	else if (this->x == 98)
+	{
+		cout << "   ";
+		Go(this->x, this->y + 1);
+		cout << "   ";
+		Go(1, this->y);
+		cout << " ";
+		Go(1, this->y + 1);
+		cout << "   ";
+	}
+	else if (this->x == 99)
+	{
+		cout << "  ";
+		Go(this->x, this->y + 1);
+		cout << "  ";
+		Go(1, this->y);
+		cout << "  ";
+		Go(1, this->y + 1);
+		cout << "    ";
+	}
+	else if (this->x == 100)
+	{
+		cout << " ";
+		Go(this->x, this->y + 1);
+		cout << " ";
+		Go(1, this->y);
+		cout << "   ";
+		Go(1, this->y + 1);
+		cout << "     ";
+	}
+	else
+	{
+		cout << "    ";
+		Go(this->x, this->y + 1);
+		cout << "      ";
+	}
+}
 void Truck::Appear()
 {
 	Go(this->x, this->y);
 
 	if (this->x == 96)
 	{
-		cout << "  " << char(BLOCK) << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
 		Go(this->x, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
-		Go(1, this->y);
-		cout << char(BLOCK);
 		Go(1, this->y + 1);
 		cout << char(BLOCK);
 	}
 	else if (this->x == 97)
 	{
-		cout << "  " << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
 		Go(this->x, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
-		Go(1, this->y);
-		cout << char(BLOCK) << char(BLOCK);
 		Go(1, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK);
 	}
 	else if (this->x == 98)
 	{
-		cout << "  " << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK) << char(BLOCK);
 		Go(this->x, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK);
 		Go(1, this->y);
-		cout << char(BLOCK) << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK);
 		Go(1, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK);
 	}
 	else if (this->x == 99)
 	{
-		cout << "  ";
+		cout << char(BLOCK) << char(BLOCK);
 		Go(this->x, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK);
 		Go(1, this->y);
-		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK);
 		Go(1, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
 	}
 	else if (this->x == 100)
 	{
-		cout << " ";
+		cout << char(BLOCK);
 		Go(this->x, this->y + 1);
 		cout << char(BLOCK);
 		Go(1, this->y);
-		cout << " " << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK) << char(BLOCK);
 		Go(1, this->y + 1);
 		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
 	}
 	else
 	{
-		cout << "  " << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
+		cout << char(BLOCK) << char(BLOCK) << char(BLOCK) << char(BLOCK);
 
 		Go(x, y + 1);
 
@@ -414,9 +478,10 @@ void Snake::Appear()
 }
 Timer::Timer() 
 {
-	this->x = 51;
+	this->x = 98;
+	this->y = 26;
 	this->status = false;
-	this->chance = 10;
+	this->chance = 100;
 }
 void Timer::Targer(int target)
 {
@@ -425,13 +490,31 @@ void Timer::Targer(int target)
 }
 void Timer::Disappear()
 {
-	Go(this->x, this->y);
-	cout << "   ";
+	Go(this->x, this->y - 1);
+	SetTextAttribute(DARKGRAY);
+	cout << char(BOTTOMHALF);
+
+	Go(this->x + 1, this->y - 1);
+	SetTextAttribute(GREEN);
+	cout << char(BOTTOMHALF);
+
+	SetTextAttribute(LIGHTGREEN);
+	Go(this->x - 1, this->y);
+	cout << "    ";
 }
 void Timer::Appear()
 {
-	Go(this->x, this->y);
-	cout << "<" << this->time << ">";
+	Go(this->x, this->y - 1);
+	SetTextAttribute(RED);
+	cout << char(BOTTOMHALF);
+
+	Go(this->x + 1, this->y - 1);
+	SetTextAttribute(DARKGRAY);
+	cout << char(BOTTOMHALF);
+
+	SetTextAttribute(LIGHTGREEN);
+	Go(this->x - 1, this->y);
+	cout << "<0" << this->time << ">";
 }
 bool Timer::Update()
 {
@@ -439,8 +522,9 @@ bool Timer::Update()
 	if (this->countdown == 0)
 	{
 		this->status = false;
-		this->chance = 10;
+		this->chance = 100;
 		this->Disappear();
+		PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
 	}
 	return this->status;
 }

@@ -2,6 +2,8 @@
 
 Game::Game()
 {
+	this->playing = true;
+	this->selection = 0;
 	this->life = 2;
 	this->level = 1;
 	this->width = 100;
@@ -10,10 +12,18 @@ Game::Game()
 	this->status = 1;
 	this->Allocate();
 	this->player.Reset(this->width, this->height);
-	
+	this->sound = true;
+	this->bird = 100;
+	this->snake = 160;
+	this->settings = 0;
+	this->carspeed = 20;
+	this->truckspeed = 25;
+	this->birdspeed = 30;
+	this->snakespeed = 35;
 }
 void Game::NewGame()
 {
+	this->playing = true;
 	this->life = 2;
 	this->level = 1;
 	this->width = 100;
@@ -34,27 +44,34 @@ void Game::Allocate()
 	quantity = this->level < 5 ? this->level : 5;
 	acceleration = this->level > 5 ? (this->level - 5) * 2 : 0;
 
-	speed = 20 - acceleration > 5 ? 20 - acceleration : 5;
+	speed = this->carspeed - acceleration > 5 ? this->carspeed - acceleration : 5;
 	for (int i = 0; i < quantity; i++)
 	{
 		this->machine.push_back(new Car(1 + i * ((width - 6 * quantity) / quantity + 6), 27, speed, false));
+	}
+
+	for (int i = 0; i < quantity; i++)
+	{
 		this->machine.push_back(new Car(1 + i * ((width - 6 * quantity) / quantity + 6), 19, speed, false));
 	}
 
-	speed = 25 - acceleration > 5 ? 25 - acceleration : 5;
+	speed = this->truckspeed - acceleration > 5 ? this->truckspeed - acceleration : 5;
 	for (int i = 0; i < quantity; i++)
 	{
 		this->machine.push_back(new Truck((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 23, speed, true));
 	}
 
-	speed = 40 - acceleration > 5 ? 40 - acceleration : 5;
+	speed = this->snakespeed - acceleration > 5 ? this->snakespeed - acceleration : 5;
 	for (int i = 0; i < quantity; i++)
 	{
-		this->animal.push_back(new Snake((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 7, speed, true));
 		this->animal.push_back(new Snake((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 15, speed, true));
 	}
 
-	speed = 30 - acceleration > 5 ? 30 - acceleration : 5;
+	for (int i = 0; i < quantity; i++)
+	{
+		this->animal.push_back(new Snake((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 7, speed, true));
+	}
+	speed = this->birdspeed - acceleration > 5 ? this->birdspeed - acceleration : 5;
 	for (int i = 0; i < quantity; i++)
 	{
 		this->animal.push_back(new Bird(1 + i * ((width - 6 * quantity) / quantity + 6), 11, speed, false));
@@ -102,24 +119,30 @@ void Game::Reset(bool status)
 {
 	this->key = 6;
 	string text;
-	Go(90, 1);
+	Go(75, 1);
 	if (status)
 	{
-		text = "WIN       ";
+		text = "               WIN       ";
 		cout << text;
+		Go(75, 2);
+		cout << "                         ";
 	}
 	else
 	{
-		text = "DEAD      ";
+		text = "               DEAD      ";
 		cout << text;
+		Go(75, 2);
+		cout << "                         ";
 	}
 	this->player.Sparkle();
 	for (int i = 3; i > 0; i--)
 	{
-		Go(90, 1);
-		cout << "   " << i << "   ";
+		Go(75, 1);
+		cout << "               " << i << "         ";
+		PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		Sleep(1000);
 	}
+	PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
 	if (status)
 	{
 		this->ResetLevel(true);
@@ -133,6 +156,10 @@ void Game::Reset(bool status)
 		this->key = 8;
 		this->key = true;
 	}
+
+	Go(40, 0);
+	for (int i = 0; i <= 20; i++)
+		cout << char(205);
 
 	Go(0, 6);
 	cout << char(204);
@@ -148,9 +175,22 @@ void Game::Reset(bool status)
 		Go(i, 5);
 		cout << char(186);
 	}
+
 	string destination = "DESTINATION";
 	Go(int((this->width - destination.length()) / 2 + 2), 5);
 	cout << destination;
+
+	for (int i = 0; i < 9; i += 4)
+	{
+		Go(98, 17 + i);
+		SetTextAttribute(DARKGRAY);
+		cout << char(BOTTOMHALF);
+		Go(99, 17 + i);
+		SetTextAttribute(GREEN);
+		cout << char(BOTTOMHALF);
+	}
+
+	SetTextAttribute(LIGHTGREEN);
 
 	if (this->life == 0)
 	{
@@ -189,9 +229,17 @@ void Game::Operation()
 		this->UpdateNPLCs();
 		this->UpdateNPMCs();
 		if (this->player.Win())
+		{
+			if(this->sound)
+				PlaySound(TEXT("Sound//Win.wav"), NULL, SND_FILENAME | SND_ASYNC);
 			this->Reset(true);
+		}
 		if (!this->Status())
+		{
+			if(this->sound)
+				PlaySound(TEXT("Sound//Death.wav"), NULL, SND_FILENAME | SND_ASYNC);
 			this->Reset(false);
+		}
 		Sleep(50);
  	}
 
@@ -200,18 +248,20 @@ void Game::Operation()
 void Game::Start()
 {
 	this->DrawGame(LIGHTGREEN, "CROSSING ROAD");
+	HideCursor();
 
 	thread operation(bind(&Game::Operation,this));
+	this->key = 7;
 
 	while (TRUE)
 	{
 		this->key = Key(this->key);
-		if (this->life!= 0)
+		if (this->life != 0)
 		{
 			if (this->key == 5)
 			{
 				this->Exit(operation.native_handle());
-				this->Menu();
+				exit(0);
 			}
 			else
 			{
@@ -223,7 +273,16 @@ void Game::Start()
 				{
 					this->Pause(operation.native_handle());
 					this->Save();
-					this->Resume((HANDLE)operation.native_handle());
+				}
+				else if (key == 10)
+				{
+					this->Pause(operation.native_handle());
+					this->playing = true;
+					if (this->Load(true))
+					{
+						//this->life = 0;
+						this->Start();
+					}
 				}
 			}
 		}
@@ -240,6 +299,73 @@ void Game::Start()
 				this->Menu();
 			}
 		}
+
+		if (!this->playing)
+		{
+			if(this->PlayingMenu(this->key))
+				switch (this->selection)
+				{
+				case 0:
+				{
+					if (this->settings == 0)
+					{
+						this->Pause(operation.native_handle());
+						this->Save();
+					}
+					else
+					{
+						this->settings = 0;
+						this->Mode(false);
+					}
+					break;
+				}
+				case 1:
+				{
+					
+					if (this->settings == 0)
+					{
+						this->playing = true;
+						if (this->Load(true))
+						{
+							//this->life = 0;
+							this->Start();
+						}
+					}
+					else
+					{
+						this->settings = 0;
+						this->Mode(true);
+					}
+					break;
+				}
+				case 2:
+				{
+					if (this->settings == 0)
+						this->settings = 1;
+					else
+					{
+						this->settings = 0;
+						this->sound = true;
+					}
+					break;
+				}
+				case 3:
+				{
+					if (this->settings == 0)
+					{
+						this->Exit(operation.native_handle());
+						exit(0);
+					}
+					else
+					{
+						this->sound = false;
+						this->settings = 0;
+					}
+					break;
+				}
+				}
+		}
+
 		if (this->status++ == 0)
 		{
 			Sleep(50);
@@ -247,60 +373,298 @@ void Game::Start()
 		}
 	}
 }
-void Game::Load()
+bool Game::Load(bool sub)
 {
+	string name;
+
+	if (sub)
+		Go(47, 35);
+	else
+		Go(47, 25);
+	cout << "FILE: ";
+	cin >> name;
+
+	ifstream file(name, ios::binary);
+	if (!file.is_open())
+	{
+		if (sub)
+			Go(47, 35);
+		else
+			Go(47, 25);
+		for (int i = 0; i < 30; i++)
+			cout << " ";
+		if (sub)
+			Go(47, 35);
+		else
+			Go(47, 25);
+		cout << "INVALID FILE!";
+		PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
+		Sleep(1000);
+
+		if (sub)
+			Go(47, 35);
+		else
+			Go(47, 25);
+		for (int i = 0; i < 30; i++)
+			cout << " ";
+
+		return false;
+	}
+	else
+	{
+		Go(75, 1);
+		cout << "               LOADING   ";
+		Go(75, 2);
+		cout << "                         ";
+		for (int i = 0; i < 3; i++)
+		{
+			Go(97 + i, 1);
+			cout << ".";
+			PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
+			Sleep(1000);
+		}
+
+		Go(47, 35);
+		for (int i = 0; i < 40; i++)
+			cout << " ";
+
+		int life, level, speed, acceleration;
+
+		file.read((char*)&life, sizeof(int));
+		file.read((char*)&level, sizeof(int));
+
+		int quantity =level < 5 ? this->level : 5;
+		vector<NPMC*> machine;
+		vector<NPLC*> animal;
+
+		acceleration = level > 5 ? (level - 5) * 2 : 0;
+		speed = this->carspeed - acceleration > 5 ? this->carspeed - acceleration : 5;
+
+		for (int i = 0; i < quantity; i++)
+		{
+			machine.push_back(new Car(1 + i * ((width - 6 * quantity) / quantity + 6), 27, speed, false));
+			machine.push_back(new Car(1 + i * ((width - 6 * quantity) / quantity + 6), 19, speed, false));
+		}
+
+		speed = this->truckspeed - acceleration > 5 ? this->truckspeed - acceleration : 5;
+		for (int i = 0; i < quantity; i++)
+		{
+			machine.push_back(new Truck((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 23, speed, true));
+		}
+
+		speed = this->snakespeed - acceleration > 5 ? this->snakespeed - acceleration : 5;
+		for (int i = 0; i < quantity; i++)
+		{
+			animal.push_back(new Snake((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 7, speed, true));
+			animal.push_back(new Snake((1 + ((width - 6 * quantity) / quantity + 6) / 2 + i * ((width - 6 * quantity) / quantity + 6)) % this->width, 15, speed, true));
+		}
+
+		speed = this->birdspeed - acceleration > 5 ? this->birdspeed - acceleration : 5;
+		for (int i = 0; i < quantity; i++)
+		{
+			animal.push_back(new Bird(1 + i * ((width - 6 * quantity) / quantity + 6), 11, speed, false));
+		}
+
+		for (int i = 0; i < quantity * 3; i++)
+		{
+			file.read((char*)&animal[i]->x, sizeof(int));
+			file.read((char*)&animal[i]->y, sizeof(int));
+		}
+		for (int i = 0; i < quantity * 3; i++)
+		{
+			file.read((char*)&machine[i]->x, sizeof(int));
+			file.read((char*)&machine[i]->y, sizeof(int));
+		}
+
+		for (int i = 0; i < quantity * 3; i+= quantity)
+		{
+			for (int j = 1; j < quantity; j++)
+			{
+				if(animal[i]->y != animal[i + j]->y)
+				{
+					if (sub)
+						Go(47, 35);
+					else
+						Go(47, 25);
+					for (int i = 0; i < 30; i++)
+						cout << " ";
+					if (sub)
+						Go(47, 35);
+					else
+						Go(47, 25);
+					cout << "INVALID FILE!";
+					PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
+					Sleep(1000);
+
+					if (sub)
+						Go(47, 35);
+					else
+						Go(47, 25);
+					for (int i = 47; i < 77; i++)
+						cout << " ";
+
+					Go(75, 1);
+					cout << "                         ";
+
+					if (sub)
+					{
+						Go(75, 1);
+						cout << "               PAUSE     ";
+					}
+
+					return false;
+				}
+			}
+		}
+
+		for (int i = 0; i < quantity * 3; i += quantity)
+		{
+			for (int j = 1; j < quantity; j++)
+			{
+				if (machine[i]->y != machine[i + j]->y)
+				{
+					if (sub)
+						Go(47, 35);
+					else
+						Go(47, 25);
+					for (int i = 0; i < 30; i++)
+						cout << " ";
+					if (sub)
+						Go(47, 35);
+					else
+						Go(47, 25);
+					cout << "INVALID FILE!";
+					PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
+					Sleep(1000);
+
+					if (sub)
+						Go(47, 35);
+					else
+						Go(47, 25);
+					for (int i = 0; i < 30; i++)
+						cout << " ";
+
+					Go(75, 1);
+					cout << "                         ";
+
+					if (sub)
+					{
+						Go(75, 1);
+						cout << "               PAUSE     ";
+					}
+
+					return false;
+				}
+			}
+		}
+		
+
+		file.read((char*)&this->player.x, sizeof(int));
+		file.read((char*)&this->player.y, sizeof(int));
+		this->level = level;
+		this->life = life;
+		this->machine = machine;
+		this->animal = animal;
+
+	}
+	file.close();
+
+	if (sub)
+	{
+		Go(75, 1);
+			cout << "               PAUSE     ";
+	}
+
 	this->status = 0;
-	FILE *file;
-	file = fopen("Data.txt", "r");
-	fscanf(file, "%i %i", &this->life, &this->level);
-	fscanf(file, " %i %i", &this->player.x, &this->player.y);
-	for (unsigned i = 0; i < this->animal.size(); i++)
-	{
-		fscanf(file, " %i %i", &this->animal[i]->x, &this->animal[i]->y);
-	}
-	for (unsigned i = 0; i < this->machine.size(); i++)
-	{
-		fscanf(file, " %i %i", &this->machine[i]->x, &this->machine[i]->y);
-	}
-	fclose(file);
+	return true;
 }
 void Game::Save()
 {
-	FILE *file;
-	file = fopen("Data.txt", "w");
-	fprintf(file, "%i %i", this->life, this->level);
-	fprintf(file, " %i %i", this->player.x, this->player.y);
-	for (unsigned i = 0; i < this->animal.size(); i++)
+	string name;
+	Go(47, 35);
+	cout << "FILE: ";
+	cin >> name;
+
+	ofstream file(name, ios::binary);
+	if (!file.is_open())
 	{
-		fprintf(file, " %i %i", this->animal[i]->x, this->animal[i]->y);
+		Go(47, 35);
+		for (int i = 47; i < 101; i++)
+			cout << " ";
+		Go(47, 35);
+		cout << "INVALID FILE";
+		PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
+		Sleep(1000);
+		return;
 	}
-	for (unsigned i = 0; i < this->machine.size(); i++)
+	else
 	{
-		fprintf(file, " %i %i", this->machine[i]->x, this->machine[i]->y);
+		file.write((char*)&this->life, sizeof(int));
+		file.write((char*)&this->level, sizeof(int));
+		for (unsigned i = 0; i < this->animal.size(); i++)
+		{
+			file.write((char*)&this->animal[i]->x, sizeof(int));
+			file.write((char*)&this->animal[i]->y, sizeof(int));
+		}
+		for (unsigned i = 0; i < this->machine.size(); i++)
+		{
+			file.write((char*)&this->machine[i]->x, sizeof(int));
+			file.write((char*)&this->machine[i]->y, sizeof(int));
+		}
+		file.write((char*)&this->player.x, sizeof(int));
+		file.write((char*)&this->player.y, sizeof(int));
 	}
-	fclose(file);
-	Go(90, 1);
-	cout << "SAVING";
+	file.close();
+
+	Go(75, 1);
+	cout << "               SAVING    ";
+	Go(75, 2);
+	cout << "                         ";
 	for (int i = 0; i < 3; i++)
 	{
 		Go(96 + i, 1);
 		cout << ".";
+		PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		Sleep(1000);
 	}
+
+	Go(47, 35);
+	for (int i = 47; i < 101; i++)
+		cout << " ";
+
+	Go(75, 1);
+	cout << "PRESS [SPACE] TO CONTINUE";
+	Go(75, 2);
+	cout << "   PRESS [ESC] TO EXIT";
+
+	Go(47, 35);
+	cout << "   DONE";
+
+	Sleep(1000);
+
+	Go(37, 35);
+	for (int i = 37; i < 101; i++)
+		cout << " ";
 }
 void Game::Pause(HANDLE h)
 {
-	string text = "PAUSE     ";
-	Go(90, 1);
-	cout << text;
+	Go(75, 1);
+	cout << "               PAUSE     ";
+	Go(75, 2);
+	cout << "                         ";
+	ResumeThread(h);
 	SuspendThread(h);
+	this->playing = false;
 }
 void Game::Resume(HANDLE h)
 {
-	string text = "PLAYING   ";
-	Go(90, 1);
+	string text = "               PLAYING   ";
+	Go(75, 1);
 	cout << text;
+	Go(75, 2);
+	cout << "                         ";
 	ResumeThread(h);
+	this->playing = true;
 }
 void Game::UpdatePlayer(int move)
 {
@@ -355,8 +719,20 @@ void Game::UpdateNPLCs()
 			this->animal[i]->Appear();
 		}
 	}
+	if (this->sound)
+	{
+		if (--this->bird == 0)
+		{
+			PlaySound(TEXT("Sound//bird.wav"), NULL, SND_FILENAME | SND_ASYNC);
+			this->bird = 160;
+		}
+		if (--this->snake == 0)
+		{
+			PlaySound(TEXT("Sound//snake.wav"), NULL, SND_FILENAME | SND_ASYNC);
+			this->snake = 220;
+		}
+	}
 }
-
 bool Game::Status()
 {
 	vector<Coordinate> player;
@@ -395,7 +771,6 @@ bool Game::Status()
 
 	return true;
 }
-
 void Game::DeleteObjects()
 {
 	this->player.Disappear();
@@ -436,7 +811,7 @@ void Game::SetTimer()
 	if ((rand() % 1000) > this->timer.Chance())
 		return;
 
-	switch (int(rand() % 5))
+	switch (int(rand() % 3))
 	{
 	case 0:
 	{
@@ -451,21 +826,6 @@ void Game::SetTimer()
 	case 2:
 	{
 		target = 19;
-		break;
-	}
-	case 3:
-	{
-		target = 15;
-		break;
-	}
-	case 4:
-	{
-		target = 11;
-		break;
-	}
-	case 5:
-	{
-		target = 7;
 		break;
 	}
 	}
@@ -483,10 +843,10 @@ void Game::SetTimer()
 	}
 
 	this->timer.SetUp(true, 100);
-	this->timer.Targer(target + 2);
+	this->timer.Targer(target - 1);
 	this->timer.Appear();
+	PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
 }
-
 void Game::UpdateTimer()
 {
 	if (this->timer.Status() && this->timer.CountDown())
@@ -495,52 +855,54 @@ void Game::UpdateTimer()
 			return;
 		this->timer.Disappear();
 		this->timer.Appear();
+		PlaySound(TEXT("Sound//Bip.wav"), NULL, SND_FILENAME | SND_ASYNC);
 	}
 }
+void Game::Mode(bool mode)
+{
+	if (mode)
+	{
+		this->carspeed = 5;
+		this->truckspeed = 10;
+		this->birdspeed = 15;
+		this->snakespeed = 20;
+	}
+	else
+	{
+		this->carspeed = 20;
+		this->truckspeed = 25;
+		this->birdspeed = 30;
+		this->snakespeed = 35;
+	}
 
+	int quantity;
 
+	quantity = this->level < 5 ? this->level : 5;
 
+	for (int i = 0; i < quantity * 2; i++)
+	{
+		this->animal[i]->Update(this->snakespeed);
+	}
 
+	for (int i = quantity * 2; i < quantity * 3; i++)
+	{
+		this->animal[i]->Update(this->birdspeed);
+	}
 
+	for (int i = 0; i < quantity * 2; i++)
+	{
+		this->machine[i]->Update(this->carspeed);
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	for (int i = quantity * 2; i < quantity * 3; i++)
+	{
+		this->machine[i]->Update(this->truckspeed);
+	}
+}
 void Game::DrawGame(int color, string text)
 {
 	system("cls");
-	SetWindowSize(850, 600);
+	SetWindowSize(850, 750);
 
 	SetTextAttribute(color);
 	Go(0, 0);
@@ -605,14 +967,64 @@ void Game::DrawGame(int color, string text)
 	cout << "PLAYING";
 	Go(this->width / 2, 2);
 	cout << this->level;
-}
 
+
+	for (int i = this->height; i < height + 8; i++)
+	{
+		Go(0, i);
+		cout << char(186);
+	}
+
+	Go(0, this->height + 8);
+	cout << char(200);
+
+	for (int i = 0; i < this->width; i++)
+		cout << char(205);
+	cout << char(188);
+
+	for (int i = this->height; i < this->height + 8; i++)
+	{
+		Go(this->width + 1, i);
+		cout << char(186);
+	}
+
+	Go(0, this->height);
+	cout << char(204);
+
+	Go(0, this->height + 2);
+	cout << char(204);
+
+	for (int i = 1; i <= this->width; i++)
+		cout << char(205);
+
+	Go(this->width + 1, this->height);
+	cout << char(185);
+
+	Go(this->width + 1, this->height + 2);
+	cout << char(185);
+
+	this->PlayingMenu(-1);
+
+	for (int i = 0; i < 9; i += 4)
+	{
+		Go(98, 17 + i);
+		SetTextAttribute(DARKGRAY);
+		cout << char(BOTTOMHALF);
+		Go(99, 17 + i);
+		SetTextAttribute(GREEN);
+		cout << char(BOTTOMHALF);
+	}
+
+	SetTextAttribute(LIGHTGREEN);
+}
 void Game::Menu()
 {
 	SetWindowSize(900, 500);
 	this->LoadingScreeen();
 	system("cls");
 	bool menu = TRUE;
+
+	PlaySound(TEXT("Sound//Background.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
 
 	SetTextAttribute(LIGHTMAGNETA);
 	cout << "\n\n\n\n\n";
@@ -632,13 +1044,21 @@ void Game::Menu()
 	cout << "\t\t#+#  #+# #+#  #+# #+#   #+# #+#  #+#" << endl;
 	cout << "\t\t###  ###  ######  ###   ### ####### " << endl;
 
-	string title[] = { "New game", "Load game", "Setting", "Exit game" };
-	int n = sizeof(title) / sizeof(title[0]);
-	DrawBorder(85, 5, 2, 22, LIGHTGREEN, title[0]);
+	string title[2][4];
+	title[0][0] = "NEW GAME";
+	title[0][1] = "LOAD GAME";
+	title[0][2] = "SETTINGS";
+	title[0][3] = "EXIT GAME";
+	title[1][0] = "  EASY   ";
+	title[1][1] = "  HARD   ";
+	title[1][2] = "MUSIC ON";
+	title[1][3] = "MUSIC OFF";
+
+	DrawBorder(85, 5, 2, 22, LIGHTGREEN, title[this->settings][0]);
 	int location = 10;
-	for (int i = 1; i < n; i++)
+	for (int i = 1; i < 4; i++)
 	{
-		DrawBorder(85, location, 2, 22, WHITE, title[i]);
+		DrawBorder(85, location, 2, 22, WHITE, title[this->settings][i]);
 		location += 5;
 	}
 	location = 5;
@@ -651,28 +1071,28 @@ void Game::Menu()
 		{
 			if (location < 20)
 			{
-				DrawBorder(85, location, 2, 22, WHITE, title[location / 5 - 1]);
+				DrawBorder(85, location, 2, 22, WHITE, title[this->settings][location / 5 - 1]);
 				location += 5;
-				DrawBorder(85, location, 2, 22, LIGHTGREEN, title[location / 5 - 1]);
+				DrawBorder(85, location, 2, 22, LIGHTGREEN, title[this->settings][location / 5 - 1]);
 			}
 			else {
-				DrawBorder(85, location, 2, 22, WHITE, title[n - 1]);
+				DrawBorder(85, location, 2, 22, WHITE, title[this->settings][3]);
 				location = 5;
-				DrawBorder(85, location, 2, 22, LIGHTGREEN, title[0]);
+				DrawBorder(85, location, 2, 22, LIGHTGREEN, title[this->settings][0]);
 			}
 		}
 		else if (state == UP || state == LEFT)
 		{
 			if (location > 5)
 			{
-				DrawBorder(85, location, 2, 22, WHITE, title[location / 5 - 1]);
+				DrawBorder(85, location, 2, 22, WHITE, title[this->settings][location / 5 - 1]);
 				location -= 5;
-				DrawBorder(85, location, 2, 22, LIGHTGREEN, title[location / 5 - 1]);
+				DrawBorder(85, location, 2, 22, LIGHTGREEN, title[this->settings][location / 5 - 1]);
 			}
 			else {
-				DrawBorder(85, location, 2, 22, WHITE, title[0]);
+				DrawBorder(85, location, 2, 22, WHITE, title[this->settings][0]);
 				location = 20;
-				DrawBorder(85, location, 2, 22, LIGHTGREEN, title[n - 1]);
+				DrawBorder(85, location, 2, 22, LIGHTGREEN, title[this->settings][3]);
 			}
 		}
 		else if (state == ENTER)
@@ -681,26 +1101,105 @@ void Game::Menu()
 			{
 			case 5:
 			{
-				this->NewGame();
-				this->Start();
-				menu = FALSE;
-				return;
+				if (this->settings == 0)
+				{
+					this->NewGame();
+					PlaySound(NULL, NULL, 0);
+					this->Start();
+					menu = FALSE;
+				}
+				else
+				{
+					this->settings = 0;
+					this->Mode(false);
+					DrawBorder(85, 5, 2, 22, LIGHTGREEN, title[this->settings][0]);
+					location = 5;
+					for (int i = 1; i < 4; i++)
+					{
+						location += 5;
+						DrawBorder(85, location, 2, 22, WHITE, title[this->settings][i]);
+					}
+					location = 5;
+
+				}
+				break;
 			}
 			case 10:
 			{
-				this->Load();
-				this->Start();
-				menu = FALSE;
-				return;
+				if (this->settings == 0)
+				{
+					if (this->Load(false))
+					{
+						PlaySound(NULL, NULL, 0);
+						this->Start();
+						menu = FALSE;
+					}
+				}
+				else
+				{
+					this->settings = 0;
+					this->Mode(true);
+					DrawBorder(85, 5, 2, 22, LIGHTGREEN, title[this->settings][0]);
+					location = 5;
+					for (int i = 1; i < 4; i++)
+					{
+						location += 5;
+						DrawBorder(85, location, 2, 22, WHITE, title[this->settings][i]);
+					}
+					location = 5;
+				}
+				break;
 			}
 			case 15:
 			{
-				menu = FALSE;
-				return;
+				if (this->settings == 0)
+				{
+					this->settings = 1;
+					DrawBorder(85, 5, 2, 22, LIGHTGREEN, title[this->settings][0]);
+					location = 5;
+					for (int i = 1; i < 4; i++)
+					{
+						location += 5;
+						DrawBorder(85, location, 2, 22, WHITE, title[this->settings][i]);
+					}
+					location = 5;
+				}
+				else 
+					if (this->settings == 1)
+					{
+						this->sound = true;
+						PlaySound(TEXT("Sound//Background.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+						this->settings = 0;
+						DrawBorder(85, 5, 2, 22, LIGHTGREEN, title[this->settings][0]);
+						location = 5;
+						for (int i = 1; i < 4; i++)
+						{
+							location += 5;
+							DrawBorder(85, location, 2, 22, WHITE, title[this->settings][i]);
+						}
+						location = 5;
+					}
+				break;
 			}
 			case 20:
 			{
-				exit(0);
+				if (this->settings == 0)
+					exit(0);
+				else
+				{
+					this->settings = 0;
+					this->sound = false;
+					PlaySound(NULL, NULL, 0);
+					DrawBorder(85, 5, 2, 22, LIGHTGREEN, title[this->settings][0]);
+					location = 5;
+					for (int i = 1; i < 4; i++)
+					{
+						location += 5;
+						DrawBorder(85, location, 2, 22, WHITE, title[this->settings][i]);
+					}
+					location = 5;
+				}
+				break;
 			}
 			}
 		}
@@ -710,6 +1209,7 @@ void Game::Menu()
 }
 void Game::LoadingScreeen()
 {
+	HideCursor();
 	system("cls");
 
 	int x = 35;
@@ -743,4 +1243,61 @@ void Game::LoadingScreeen()
 		Sleep(70);
 	}
 	Sleep(700);
+}
+bool Game::PlayingMenu(int key)
+{
+	if (key == 4)
+		return true;
+
+	switch (key)
+	{
+	case 0: 
+	{
+		this->selection -= 1;
+		if (this->selection == -1)
+			this->selection = 3;
+		break;
+	}
+	case 1:
+	{
+		this->selection += 1;
+		break;
+	}
+	case 2:
+	{
+		this->selection -= 1;
+		if (this->selection == -1)
+			this->selection = 3;
+		break;
+	}
+	case 3:
+	{
+		this->selection += 1;
+		break;
+	}
+	}
+
+	this->selection = this->selection % 4;
+
+	bool menu = true;
+	string title[2][4];
+	title[0][0] = "SAVE GAME";
+	title[0][1] = "LOAD GAME";
+	title[0][2] = "SETTINGS";
+	title[0][3] = "EXIT GAME";
+	title[1][0] = "  EASY   ";
+	title[1][1] = "  HARD   ";
+	title[1][2] = "MUSIC ON";
+	title[1][3] = "MUSIC OFF";
+	int location[4] = { 6, 30, 54, 78 };
+	
+	DrawBorder(location[this->selection] , 39, 2, 20, LIGHTGREEN, title[this->settings][this->selection]);
+	for (int i = 0; i < 4; i++)
+	{
+		if (i != this->selection)
+			DrawBorder(location[i], 39, 2, 20, WHITE, title[this->settings][i]);
+	}
+	SetTextAttribute(LIGHTGREEN);
+
+	return false;
 }

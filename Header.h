@@ -24,6 +24,8 @@ using namespace std;
 #include <fstream>
 #include <processthreadsapi.h>
 #include <vector>
+
+#pragma comment(lib,"winmm.lib")
 #pragma pack (push)
 #pragma pack(1)
 #pragma pack(pop)
@@ -50,10 +52,11 @@ public:
 	vector<int> space;
 public:
 	Character() { this->space.push_back(6); this->space.push_back(6); };
+	Character(vector<int> space) { this->space = space; };
 	void virtual Appear() = 0;
-	void Disappear();
-	vector<Coordinate> Space();
-	void Sparkle();
+	void virtual Disappear();
+	vector<Coordinate> virtual Space();
+	void virtual Sparkle();
 
 };
 
@@ -62,8 +65,9 @@ class Player : public Character
 private:
 	bool status;
 public:
-	Player() {};
+	Player() { this->space[0] = 3; this->space[1] = 3; };
 	void Appear();
+	void Disappear();
 	void Update(int x, int y, int width, int height);
 	bool Win();
 	void Reset(int width, int height);
@@ -97,10 +101,11 @@ protected:
 	bool go;
 public:
 	NPC(int x, int y, int max, bool go);
-	void Move();
+	void virtual Move();
 	void virtual Appear() = 0;
-	bool Speed();
-	void SetSpeed(int speed);
+	bool virtual Speed();
+	void virtual SetSpeed(int speed);
+	void virtual Update(int max);
 };
 
 class NPMC : public NPC
@@ -127,8 +132,9 @@ public:
 class Truck : public NPMC
 {
 public:
-	Truck(int x, int y, int max, bool go) : NPMC(x, y, max, go) {};
+	Truck(int x, int y, int max, bool go) : NPMC(x, y, max, go) { this->space[0] = 4; };
 	void Appear();
+	void Disappear();
 };
 
 class Snake : public NPLC
@@ -157,6 +163,16 @@ private:
 	int width;
 	int key;
 	int status;
+	int selection;
+	bool playing;
+	bool sound;
+	int bird;
+	int snake;
+	int settings;
+	int carspeed;
+	int truckspeed;
+	int snakespeed;
+	int birdspeed;
 public:
 	Game();
 	void DrawGame(int color, string text);
@@ -168,7 +184,7 @@ public:
 	void Exit(HANDLE);
 	void Start();
 	void Operation();
-	void Load();
+	bool Load(bool sub);
 	void Save();
 	void Pause(HANDLE h);
 	void Resume(HANDLE h);
@@ -184,6 +200,8 @@ public:
 	void SetTimer();
 	void UpdateTimer();
 	void LoadingScreeen();
+	bool PlayingMenu(int key);
+	void Mode(bool mode);
 };
 
 void Go(int x, int y);
@@ -191,4 +209,5 @@ void SetTextAttribute(int k);
 void SetWindowSize(int width, int height);
 void DrawBorder(int x, int y, int width, int height, int color, string textinbutton);
 status Key(char a);
+void HideCursor();
 #endif
